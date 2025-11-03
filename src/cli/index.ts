@@ -217,23 +217,63 @@ program
 program
   .command('validate')
   .description('Validate lineage graph accuracy')
-  .option('-f, --file <path>', 'Lineage graph JSON file')
+  .option('-r, --repo <repo>', 'Repository to validate')
+  .option('-t, --token <token>', 'GitHub Personal Access Token')
+  .option('-o, --output <path>', 'Output report path', './validation-report.md')
   .action(async (options) => {
-    console.log('Validating lineage graph accuracy...');
+    console.log('Running accuracy validation...');
     
     try {
-      // For now, use sample test cases
-      const testCases = createSampleTestCases();
+      const { accuracyTestCases } = await import('../validation/test-cases');
+      const { runAllValidationTests } = await import('../validation/test-runner');
       
-      if (options.file) {
-        const fs = require('fs');
-        const graphData = JSON.parse(fs.readFileSync(options.file, 'utf-8'));
-        // Would need to convert JSON to LineageGraph format
-        console.log(`✓ Loaded graph from ${options.file}`);
+      const testCases = options.repo 
+        ? accuracyTestCases.filter(tc => tc.repository.includes(options.repo))
+        : accuracyTestCases;
+      
+      if (testCases.length === 0) {
+        console.error('No test cases found. Use --repo to filter or ensure test cases are configured.');
+        process.exit(1);
       }
       
-      console.log(`✓ Using ${testCases.length} test cases for validation`);
-      console.log('Note: Full validation requires a loaded lineage graph');
+      console.log(`Running ${testCases.length} validation test(s)...`);
+      const result = await runAllValidationTests(testCases, options.token);
+      
+      // Save report
+      const fs = require('fs');
+      const outputDir = require('path').dirname(options.output);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      fs.writeFileSync(options.output, result.report);
+      
+      console.log(`\n✓ Validation complete`);
+      console.log(`  Total: ${result.summary.total}`);
+      console.log(`  Passed: ${result.summary.passed}`);
+      console.log(`  Failed: ${result.summary.failed}`);
+      console.log(`  Lineage Accuracy: ${(result.summary.averageLineageAccuracy * 100).toFixed(1)}%`);
+      console.log(`  Impact F1 Score: ${(result.summary.averageImpactF1 * 100).toFixed(1)}%`);
+      console.log(`  Report saved to: ${options.output}`);
+    } catch (error: any) {
+      console.error('Error:', error.message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Generate API documentation command
+ */
+program
+  .command('docs:api')
+  .description('Generate API documentation')
+  .option('-o, --output <path>', 'Output file path', './docs/API_DOCUMENTATION_AUTO.md')
+  .action(async (options) => {
+    console.log('Generating API documentation...');
+    
+    try {
+      const { generateAndSaveAPIDocs } = await import('../reporting/api-docs-generator');
+      generateAndSaveAPIDocs(options.output);
+      console.log(`✓ API documentation generated: ${options.output}`);
     } catch (error: any) {
       console.error('Error:', error.message);
       process.exit(1);
