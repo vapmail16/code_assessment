@@ -13,6 +13,9 @@ export * from './assessment';
 export * from './reporting';
 export * from './impact';
 export * from './visualization';
+export * from './analyzers/testing';
+export * from './validation';
+export * from './performance';
 
 // Re-export specific functions to avoid conflicts
 export { detectFrontendCircularDependencies } from './analyzers/frontend';

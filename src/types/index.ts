@@ -9,4 +9,5 @@ export * from './analysis';
 export * from './lineage';
 export * from './assessment';
 export * from './impact';
+export * from './performance';
 

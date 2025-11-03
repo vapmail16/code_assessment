@@ -7,6 +7,7 @@ import { LineageGraph, DependencyGraph } from '../types';
 import { Endpoint, DatabaseQuery } from '../types';
 import { Component } from '../types';
 import { extractChangeDetails } from './change-parser';
+import { addTestCoverageToImpact, addTestRecommendations } from './test-coverage';
 
 export interface ImpactAnalysisContext {
   changeRequest: ChangeRequest;
@@ -15,6 +16,8 @@ export interface ImpactAnalysisContext {
   endpoints: Endpoint[];
   queries: DatabaseQuery[];
   components: Component[];
+  testFiles?: any[]; // TestFile[] - use any to avoid circular dependency
+  fileTree?: any; // FileTree
 }
 
 /**
@@ -49,7 +52,7 @@ export function analyzeChangeImpact(
   );
 
   // Generate recommendations
-  const recommendations = generateRecommendations(
+  let recommendations = generateRecommendations(
     context,
     affectedNodes,
     breakingChanges
@@ -62,7 +65,7 @@ export function analyzeChangeImpact(
     totalAffected: affectedNodes.length,
   };
 
-  return {
+  const result: ImpactAnalysis = {
     repository: context.lineageGraph.metadata ? '' : '', // Will be set by caller
     timestamp: new Date(),
     changeRequest,
@@ -73,6 +76,22 @@ export function analyzeChangeImpact(
     recommendations,
     summary,
   };
+
+  // Add test coverage recommendations if test files are provided
+  if (context.testFiles && context.testFiles.length > 0) {
+    const testImpact = addTestCoverageToImpact(
+      result as any,
+      context.testFiles,
+      context.fileTree || { files: new Map(), directories: new Map() }
+    );
+    const testRecommendations = addTestRecommendations(
+      result as any,
+      testImpact.affectedTests
+    );
+    result.recommendations = [...recommendations, ...testRecommendations];
+  }
+
+  return result;
 }
 
 /**
