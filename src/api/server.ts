@@ -4,12 +4,20 @@
 
 import { Express } from 'express';
 import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { GitHubService } from '../github/service';
 import { TechStackDetector } from '../detection';
 import { parseChangeRequest } from '../impact/change-parser';
+import { exportToJSON, exportToGraphML, exportToCytoscape } from '../visualization';
+import { loadConfig } from '../config';
+import { logger } from '../utils/logger';
+import { formatError } from '../utils/errors';
 
 export interface ServerOptions {
   port?: number;
+  host?: string;
   githubToken?: string;
 }
 
@@ -18,9 +26,41 @@ export interface ServerOptions {
  */
 export function createServer(options: ServerOptions = {}): Express {
   const app = express();
-  const port = options.port || 3000;
+  const config = loadConfig();
+
+  // Security middleware
+  app.use(helmet());
+  
+  // CORS
+  if (config.server.cors.enabled) {
+    app.use(cors({
+      origin: config.server.cors.origin,
+      credentials: true,
+    }));
+  }
+
+  // Rate limiting
+  if (config.server.rateLimit.enabled) {
+    const limiter = rateLimit({
+      windowMs: config.server.rateLimit.windowMs,
+      max: config.server.rateLimit.max,
+      message: 'Too many requests from this IP, please try again later.',
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+    app.use('/api/', limiter);
+  }
 
   app.use(express.json());
+
+  // Request logging
+  app.use((req, res, next) => {
+    logger.info(`${req.method} ${req.path}`, {
+      ip: req.ip,
+      userAgent: req.get('user-agent'),
+    });
+    next();
+  });
 
   // Health check
   app.get('/health', (req, res) => {
@@ -63,7 +103,12 @@ export function createServer(options: ServerOptions = {}): Express {
         fileCount: analysis.fileTree.files.size,
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      logger.error('Analysis failed', { error: error.message, stack: error.stack });
+      const formattedError = formatError(error);
+      res.status(formattedError.statusCode).json({
+        error: formattedError.message,
+        code: formattedError.code,
+      });
     }
   });
 
@@ -84,7 +129,12 @@ export function createServer(options: ServerOptions = {}): Express {
         message: 'Impact analysis would be performed here',
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      logger.error('Analysis failed', { error: error.message, stack: error.stack });
+      const formattedError = formatError(error);
+      res.status(formattedError.statusCode).json({
+        error: formattedError.message,
+        code: formattedError.code,
+      });
     }
   });
 
@@ -97,17 +147,35 @@ export function createServer(options: ServerOptions = {}): Express {
         return res.status(400).json({ error: 'Lineage graph required' });
       }
 
-      // Export based on format
       const exportFormat = format || 'json';
-      // TODO: Implement actual export logic
+      let exported: string | object;
 
-      res.json({
-        success: true,
-        format: exportFormat,
-        message: 'Graph export would be performed here',
-      });
+      switch (exportFormat) {
+        case 'json':
+          exported = exportToJSON(graph, true);
+          res.setHeader('Content-Type', 'application/json');
+          res.send(exported);
+          return;
+        case 'graphml':
+          exported = exportToGraphML(graph);
+          res.setHeader('Content-Type', 'application/xml');
+          res.send(exported);
+          return;
+        case 'cytoscape':
+          exported = exportToCytoscape(graph);
+          res.setHeader('Content-Type', 'application/json');
+          res.json(exported);
+          return;
+        default:
+          return res.status(400).json({ error: `Unsupported format: ${exportFormat}` });
+      }
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      logger.error('Export failed', { error: error.message, stack: error.stack });
+      const formattedError = formatError(error);
+      res.status(formattedError.statusCode).json({
+        error: formattedError.message,
+        code: formattedError.code,
+      });
     }
   });
 
@@ -119,10 +187,12 @@ export function createServer(options: ServerOptions = {}): Express {
  */
 export function startServer(options: ServerOptions = {}): void {
   const app = createServer(options);
-  const port = options.port || 3000;
+  const config = loadConfig();
+  const port = options.port || config.server.port;
+  const host = options.host || config.server.host;
 
-  app.listen(port, () => {
-    console.log(`Code Assessment API server running on port ${port}`);
+  app.listen(port, host, () => {
+    logger.info(`Code Assessment API server running on ${host}:${port}`);
   });
 }
 

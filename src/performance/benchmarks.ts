@@ -7,6 +7,7 @@ import { TechStackDetector } from '../detection/engine';
 import { buildLineageGraph, LineageGraphContext } from '../lineage/graph-builder';
 import { runAssessment, AssessmentContext } from '../assessment/engine';
 import { PerformanceMetrics } from '../types';
+import * as path from 'path';
 
 export interface BenchmarkResult {
   repository: string;
@@ -78,19 +79,58 @@ export async function runBenchmark(
     });
     techStackDetectionTime = Date.now() - detectionStart;
 
-    // Parsing (simulated - would parse files here)
+    // Parsing - parse frontend and backend files
     const parsingStart = Date.now();
-    // TODO: Actually parse files
+    const { parseFrontendFile } = await import('../analyzers/frontend/parser');
+    const { parseBackendFile } = await import('../analyzers/backend/parser');
+    
+    let parsedCount = 0;
+    for (const [relativePath, fileNode] of analysis.fileTree.files) {
+      const filePath = fileNode.path || path.join(analysis.localPath, relativePath);
+      const ext = path.extname(filePath).toLowerCase();
+      
+      try {
+        if (['.js', '.jsx', '.ts', '.tsx'].includes(ext) && !filePath.includes('node_modules')) {
+          if (relativePath.includes('component') || relativePath.includes('page') || ext === '.jsx' || ext === '.tsx') {
+            parseFrontendFile(filePath);
+          } else if (relativePath.includes('route') || relativePath.includes('controller') || relativePath.includes('service')) {
+            parseBackendFile(filePath);
+          }
+          parsedCount++;
+          // Limit parsing for benchmark to avoid timeout
+          if (parsedCount >= 50) break;
+        }
+      } catch {
+        // Skip files that can't be parsed
+      }
+    }
     parsingTime = Date.now() - parsingStart;
 
-    // Graph building (simulated)
+    // Graph building (simplified - would build full graph in production)
     const graphStart = Date.now();
-    // TODO: Actually build graph
+    // Build basic graph structure (simplified for performance testing)
+    const { buildLineageGraph } = await import('../lineage/graph-builder');
+    const graphContext: LineageGraphContext = {
+      components: [],
+      apiCalls: [],
+      endpoints: [],
+      queries: [],
+      tables: [],
+    };
+    const graph = buildLineageGraph(graphContext);
     graphBuildingTime = Date.now() - graphStart;
 
-    // Assessment
+    // Assessment (run actual assessment)
     const assessmentStart = Date.now();
-    // TODO: Actually run assessment
+    const { runAssessment } = await import('../assessment/engine');
+    const assessmentContext: AssessmentContext = {
+      repoPath: analysis.localPath,
+      fileTree: analysis.fileTree,
+      parsedFiles: [], // Would include parsed files in production
+      dependencyGraph: undefined,
+      lineageGraph: graph,
+    };
+    await runAssessment(assessmentContext);
     assessmentTime = Date.now() - assessmentStart;
 
     // Calculate lines of code (simplified)

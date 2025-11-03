@@ -6,19 +6,21 @@ import { SecurityIssue, Vulnerability, DependencySecurity, SecurityAssessment } 
 import { FileTree } from '../../types';
 import * as fs from 'fs';
 import * as path from 'path';
+import { runAllSecurityScanners } from './external-scanners';
 
 /**
  * Run security scan on repository
  */
 export async function runSecurityScan(
   repoPath: string,
-  fileTree: FileTree
+  fileTree: FileTree,
+  options?: { useExternalScanners?: boolean }
 ): Promise<SecurityAssessment> {
   const issues: SecurityIssue[] = [];
   const vulnerabilities: Vulnerability[] = [];
   const dependencies: DependencySecurity[] = [];
 
-  // Scan for common security issues
+  // Run pattern-based scans (always)
   issues.push(...scanForSQLInjection(repoPath, fileTree));
   issues.push(...scanForXSS(repoPath, fileTree));
   issues.push(...scanForSensitiveData(repoPath, fileTree));
@@ -27,6 +29,26 @@ export async function runSecurityScan(
   // Scan package files for vulnerabilities
   const packageVulns = scanPackageFiles(repoPath, fileTree);
   vulnerabilities.push(...packageVulns);
+
+  // Run external security scanners if enabled
+  if (options?.useExternalScanners !== false) {
+    try {
+      const externalResults = await runAllSecurityScanners(repoPath);
+      for (const result of externalResults) {
+        if (result.success) {
+          issues.push(...result.issues);
+          vulnerabilities.push(...result.vulnerabilities);
+        }
+        // Log but don't fail if scanner is unavailable
+        if (!result.success && result.error) {
+          console.warn(`Scanner ${result.scanner} unavailable: ${result.error}`);
+        }
+      }
+    } catch (error: any) {
+      console.warn('External scanner execution failed:', error.message);
+      // Continue with pattern-based results
+    }
+  }
 
   // Calculate security score
   const score = calculateSecurityScore(issues, vulnerabilities);

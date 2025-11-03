@@ -11,6 +11,10 @@ import { parseChangeRequest } from '../impact/change-parser';
 import { detectTestFiles } from '../analyzers/testing';
 import { runBenchmark, runBenchmarkSuite, generatePerformanceReport } from '../performance';
 import { validateLineageAccuracy, createSampleTestCases } from '../validation';
+import { createProgress } from '../utils/progress';
+import { logger } from '../utils/logger';
+import { runAssessCommand } from './commands/assess';
+import { runLineageCommand } from './commands/lineage';
 
 const program = new Command();
 
@@ -20,11 +24,57 @@ program
   .version('0.1.0');
 
 /**
+ * Assess command - run code assessment only
+ */
+program
+  .command('assess')
+  .description('Run code assessment on a repository')
+  .requiredOption('-r, --repo <repo>', 'Repository URL or owner/repo format')
+  .option('-o, --output <path>', 'Output file path', './assessment-report.md')
+  .option('-t, --token <token>', 'GitHub Personal Access Token')
+  .action(async (options) => {
+    console.log(`Running assessment for: ${options.repo}`);
+    try {
+      const [owner, repo] = parseRepo(options.repo);
+      await runAssessCommand(`${owner}/${repo}`, options.output, options.token);
+    } catch (error: any) {
+      console.error('Error:', error.message);
+      process.exit(1);
+    }
+  });
+
+/**
+ * Lineage command - generate lineage graph only
+ */
+program
+  .command('lineage')
+  .description('Generate lineage graph for a repository')
+  .requiredOption('-r, --repo <repo>', 'Repository URL or owner/repo format')
+  .option('-o, --output <path>', 'Output file path', './lineage.json')
+  .option('-f, --format <format>', 'Export format (json, graphml, cytoscape)', 'json')
+  .option('-t, --token <token>', 'GitHub Personal Access Token')
+  .action(async (options) => {
+    console.log(`Generating lineage graph for: ${options.repo}`);
+    try {
+      const [owner, repo] = parseRepo(options.repo);
+      await runLineageCommand(
+        `${owner}/${repo}`,
+        options.output,
+        options.format as 'json' | 'graphml' | 'cytoscape',
+        options.token
+      );
+    } catch (error: any) {
+      console.error('Error:', error.message);
+      process.exit(1);
+    }
+  });
+
+/**
  * Analyze repository command
  */
 program
   .command('analyze')
-  .description('Analyze a GitHub repository')
+  .description('Analyze a GitHub repository (full analysis)')
   .requiredOption('-r, --repo <repo>', 'Repository URL or owner/repo format')
   .option('-o, --output <path>', 'Output directory for results', './output')
   .option('-t, --token <token>', 'GitHub Personal Access Token')
@@ -91,10 +141,43 @@ program
   .command('export')
   .description('Export lineage graph to visualization format')
   .requiredOption('-f, --format <format>', 'Export format (json, graphml, cytoscape)', 'json')
-  .option('-o, --output <path>', 'Output file path', 'lineage.json')
+  .requiredOption('-i, --input <path>', 'Input lineage graph JSON file')
+  .option('-o, --output <path>', 'Output file path')
   .action(async (options) => {
     console.log(`Exporting graph in ${options.format} format...`);
-    console.log(`✓ Exported to: ${options.output}`);
+    
+    try {
+      const fs = require('fs');
+      const graphData = JSON.parse(fs.readFileSync(options.input, 'utf-8'));
+      const { exportToJSON, exportToGraphML, exportToCytoscape } = await import('../visualization');
+      
+      let output: string;
+      let outputPath = options.output || `lineage.${options.format === 'json' ? 'json' : options.format === 'graphml' ? 'graphml' : 'json'}`;
+
+      // Convert JSON data to LineageGraph format if needed
+      const graph = graphData; // Assuming it's already in correct format
+
+      switch (options.format) {
+        case 'json':
+          output = exportToJSON(graph, true);
+          break;
+        case 'graphml':
+          output = exportToGraphML(graph);
+          break;
+        case 'cytoscape':
+          const cytoscapeData = exportToCytoscape(graph);
+          output = JSON.stringify(cytoscapeData, null, 2);
+          break;
+        default:
+          throw new Error(`Unsupported format: ${options.format}`);
+      }
+
+      fs.writeFileSync(outputPath, output);
+      console.log(`✓ Exported to: ${outputPath}`);
+    } catch (error: any) {
+      console.error('Error:', error.message);
+      process.exit(1);
+    }
   });
 
 /**
