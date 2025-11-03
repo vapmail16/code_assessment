@@ -3,6 +3,7 @@
  */
 
 export * from './types';
+export * from './github';
 
 // Main entry point - will be expanded as features are implemented
 export function main(): void {
