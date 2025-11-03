@@ -29,14 +29,21 @@ export interface GraphQLSchema {
 /**
  * Detect GraphQL resolvers in parsed files
  */
-export function detectGraphQLResolvers(parsedFile: ParsedFile): GraphQLResolver[] {
+export function detectGraphQLResolvers(parsedFile: ParsedFile, filePath: string): GraphQLResolver[] {
   const resolvers: GraphQLResolver[] = [];
-
-  if (!parsedFile.content) {
+  
+  // Read file content if not in parsedFile
+  let content: string;
+  try {
+    const fs = require('fs');
+    content = fs.readFileSync(filePath, 'utf-8');
+  } catch {
     return resolvers;
   }
 
-  const content = parsedFile.content;
+  if (!content) {
+    return resolvers;
+  }
   const lines = content.split('\n');
 
   // Detect Apollo Server resolvers (JavaScript/TypeScript)
