@@ -38,8 +38,18 @@ program
       console.log(`✓ Analyzed ${analysis.fileTree.files.size} files`);
       
       const detector = new TechStackDetector();
-      const techStack = detector.detectTechStack({ fileTree: analysis.fileTree });
-      console.log(`✓ Detected tech stack: ${techStack.frameworks.map((f: any) => f.name).join(', ')}`);
+      const techStack = detector.detectTechStack({
+        fileTree: analysis.fileTree,
+        configFiles: analysis.configFiles,
+        entryPoints: analysis.entryPoints,
+      });
+      const frontendName = Array.isArray(techStack.frontend) && techStack.frontend.length > 0 
+        ? techStack.frontend[0].name 
+        : 'N/A';
+      const backendName = Array.isArray(techStack.backend) && techStack.backend.length > 0 
+        ? techStack.backend[0].name 
+        : 'N/A';
+      console.log(`✓ Detected tech stack: ${frontendName}, ${backendName}`);
       
       console.log('✓ Analysis complete');
     } catch (error: any) {

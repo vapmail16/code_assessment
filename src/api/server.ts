@@ -42,12 +42,24 @@ export function createServer(options: ServerOptions = {}): Express {
       // Clone and analyze repository
       const analysis = await githubService.cloneAndAnalyzeRepository(`${owner}/${repoName}`);
       const detector = new TechStackDetector();
-      const techStack = detector.detectTechStack({ fileTree: analysis.fileTree });
+      const techStack = detector.detectTechStack({
+        fileTree: analysis.fileTree,
+        configFiles: analysis.configFiles,
+        entryPoints: analysis.entryPoints,
+      });
+
+      const frontendFrameworks = Array.isArray(techStack.frontend) ? techStack.frontend : [];
+      const backendFrameworks = Array.isArray(techStack.backend) ? techStack.backend : [];
+      const databases = Array.isArray(techStack.database) ? techStack.database : [];
 
       res.json({
         success: true,
         repository: `${owner}/${repoName}`,
-        techStack,
+        techStack: {
+          frontend: frontendFrameworks.length > 0 ? frontendFrameworks[0].name : null,
+          backend: backendFrameworks.length > 0 ? backendFrameworks[0].name : null,
+          databases: databases.map((d: any) => d.name),
+        },
         fileCount: analysis.fileTree.files.size,
       });
     } catch (error: any) {
