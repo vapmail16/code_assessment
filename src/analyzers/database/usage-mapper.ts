@@ -1,23 +1,22 @@
 /**
- * Database usage mapping - connects backend code to database tables
+ * Database usage mapping - connect backend queries to database tables
  */
 
-import { TableUsageMap } from '../../types';
-import { Endpoint, DatabaseQuery } from '../../types';
-import { Table } from '../../types';
+import { TableUsageMap, DatabaseQuery, Endpoint } from '../../types';
+import { DatabaseSchema } from '../../types';
 
 /**
  * Map database usage from queries and endpoints
  */
 export function mapDatabaseUsage(
-  tables: Table[],
+  schema: DatabaseSchema,
   queries: DatabaseQuery[],
   endpoints: Endpoint[]
 ): TableUsageMap {
   const usageMap: TableUsageMap = {};
 
-  // Initialize map for all tables
-  for (const table of tables) {
+  // Initialize usage map for all tables
+  for (const table of schema.tables) {
     usageMap[table.name] = {
       endpoints: [],
       queries: [],
@@ -40,25 +39,32 @@ export function mapDatabaseUsage(
           usageMap[tableName].writeOperations++;
         }
 
-        // Link to endpoints that contain this query
-        const endpoint = findEndpointContainingQuery(query, endpoints);
+        // Find which endpoint uses this query
+        const endpoint = findEndpointForQuery(query, endpoints);
         if (endpoint && !usageMap[tableName].endpoints.includes(endpoint.id)) {
           usageMap[tableName].endpoints.push(endpoint.id);
         }
       }
     }
 
-    // Also check tables array for queries that affect multiple tables
-    if (query.tables) {
+    // Handle queries with multiple tables
+    if (query.tables && query.tables.length > 0) {
       for (const tableName of query.tables) {
-        const lowerTableName = tableName.toLowerCase();
-        if (usageMap[lowerTableName]) {
-          usageMap[lowerTableName].queries.push(query.id);
+        const normalizedName = tableName.toLowerCase();
+        if (usageMap[normalizedName]) {
+          if (!usageMap[normalizedName].queries.includes(query.id)) {
+            usageMap[normalizedName].queries.push(query.id);
+          }
 
           if (query.type === 'select') {
-            usageMap[lowerTableName].readOperations++;
+            usageMap[normalizedName].readOperations++;
           } else {
-            usageMap[lowerTableName].writeOperations++;
+            usageMap[normalizedName].writeOperations++;
+          }
+
+          const endpoint = findEndpointForQuery(query, endpoints);
+          if (endpoint && !usageMap[normalizedName].endpoints.includes(endpoint.id)) {
+            usageMap[normalizedName].endpoints.push(endpoint.id);
           }
         }
       }
@@ -69,77 +75,60 @@ export function mapDatabaseUsage(
 }
 
 /**
- * Find endpoint that contains a query
+ * Find endpoint that uses a query
  */
-function findEndpointContainingQuery(
-  query: DatabaseQuery,
-  endpoints: Endpoint[]
-): Endpoint | undefined {
-  // Simple heuristic: find endpoint in the same file, or closest line number
-  const sameFileEndpoints = endpoints.filter((e) => e.file === query.file);
+function findEndpointForQuery(query: DatabaseQuery, endpoints: Endpoint[]): Endpoint | null {
+  // Find endpoint in the same file
+  for (const endpoint of endpoints) {
+    if (endpoint.file === query.file) {
+      // Check if query is in the same function or nearby
+      if (query.function === endpoint.handler || !query.function) {
+        return endpoint;
+      }
 
-  if (sameFileEndpoints.length === 0) {
-    return undefined;
-  }
-
-  if (sameFileEndpoints.length === 1) {
-    return sameFileEndpoints[0];
-  }
-
-  // Find endpoint with closest line number
-  let closestEndpoint = sameFileEndpoints[0];
-  let minDistance = Math.abs((closestEndpoint.line || 0) - (query.line || 0));
-
-  for (const endpoint of sameFileEndpoints) {
-    const distance = Math.abs((endpoint.line || 0) - (query.line || 0));
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestEndpoint = endpoint;
-    }
-  }
-
-  return closestEndpoint;
-}
-
-/**
- * Get tables accessed by an endpoint
- */
-export function getTablesForEndpoint(
-  endpoint: Endpoint,
-  queries: DatabaseQuery[]
-): string[] {
-  const tables: string[] = [];
-  const endpointQueries = queries.filter((q) => q.file === endpoint.file);
-
-  for (const query of endpointQueries) {
-    if (query.table && !tables.includes(query.table)) {
-      tables.push(query.table);
-    }
-    if (query.tables) {
-      for (const table of query.tables) {
-        if (!tables.includes(table)) {
-          tables.push(table);
-        }
+      // If query line is after endpoint line and within reasonable distance
+      if (query.line && endpoint.line && query.line > endpoint.line && query.line < endpoint.line + 50) {
+        return endpoint;
       }
     }
   }
 
-  return tables;
+  return null;
 }
 
 /**
- * Get endpoints that use a table
+ * Get table access summary
  */
-export function getEndpointsForTable(
-  tableName: string,
+export function getTableAccessSummary(
   usageMap: TableUsageMap,
-  endpoints: Endpoint[]
-): Endpoint[] {
-  const tableUsage = usageMap[tableName.toLowerCase()];
-  if (!tableUsage) {
-    return [];
+  tableName: string
+): {
+  totalQueries: number;
+  totalEndpoints: number;
+  readCount: number;
+  writeCount: number;
+  endpoints: string[];
+  queries: string[];
+} {
+  const usage = usageMap[tableName.toLowerCase()];
+
+  if (!usage) {
+    return {
+      totalQueries: 0,
+      totalEndpoints: 0,
+      readCount: 0,
+      writeCount: 0,
+      endpoints: [],
+      queries: [],
+    };
   }
 
-  return endpoints.filter((e) => tableUsage.endpoints.includes(e.id));
+  return {
+    totalQueries: usage.queries.length,
+    totalEndpoints: usage.endpoints.length,
+    readCount: usage.readOperations,
+    writeCount: usage.writeOperations,
+    endpoints: [...usage.endpoints],
+    queries: [...usage.queries],
+  };
 }
-
