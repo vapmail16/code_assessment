@@ -12,6 +12,7 @@ export * from './lineage';
 export * from './assessment';
 export * from './reporting';
 export * from './impact';
+export * from './visualization';
 
 // Re-export specific functions to avoid conflicts
 export { detectFrontendCircularDependencies } from './analyzers/frontend';
