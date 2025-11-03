@@ -183,7 +183,13 @@ export async function runAllValidationTests(
  */
 function generateValidationReport(
   results: ValidationResult[],
-  summary: ReturnType<typeof runAllValidationTests>['summary']
+  summary: {
+    total: number;
+    passed: number;
+    failed: number;
+    averageLineageAccuracy: number;
+    averageImpactF1: number;
+  }
 ): string {
   const lines: string[] = [];
 
