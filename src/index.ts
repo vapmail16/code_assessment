@@ -5,6 +5,7 @@
 export * from './types';
 export * from './github';
 export * from './detection';
+export * from './analyzers/frontend';
 
 // Main entry point - will be expanded as features are implemented
 export function main(): void {
