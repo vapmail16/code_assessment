@@ -1,0 +1,11 @@
+/**
+ * Main entry point for Code Assessment & Lineage Platform
+ */
+
+export * from './types';
+
+// Main entry point - will be expanded as features are implemented
+export function main(): void {
+  // Placeholder - will be implemented in future sections
+}
+
