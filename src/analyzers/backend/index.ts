@@ -12,6 +12,6 @@ export * from './graphql-detector';
 export { parseBackendFile, parsePythonFile } from './parser';
 export { extractEndpoints } from './endpoint-extractor';
 export { detectDatabaseQueries } from './query-detector';
-export { detectServiceComponents } from './service-detector';
-export { buildBackendDependencyGraph } from './graph-builder';
+export { detectServices } from './service-detector';
+export { buildBackendDependencyGraph, detectBackendCircularDependencies } from './graph-builder';
 export { detectGraphQLResolvers, parseGraphQLSchema, findGraphQLSchemaFiles } from './graphql-detector';

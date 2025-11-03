@@ -49,10 +49,10 @@ export function detectGraphQLResolvers(parsedFile: ParsedFile): GraphQLResolver[
     const line = content.substring(0, match.index).split('\n').length;
 
     resolvers.push({
-      id: `graphql-resolver:${parsedFile.file}:${type}:${name}`,
+      id: `graphql-resolver:${parsedFile.path}:${type}:${name}`,
       type,
       name,
-      file: parsedFile.file,
+      file: parsedFile.path,
       line,
     });
   }
@@ -71,12 +71,12 @@ export function detectGraphQLResolvers(parsedFile: ParsedFile): GraphQLResolver[
       const line = content.substring(0, resolverMatch.index).split('\n').length;
 
       // Avoid duplicates
-      if (!resolvers.find((r) => r.name === name && r.file === parsedFile.file)) {
+      if (!resolvers.find((r) => r.name === name && r.file === parsedFile.path)) {
         resolvers.push({
-          id: `graphql-resolver:${parsedFile.file}:${type}:${name}`,
+          id: `graphql-resolver:${parsedFile.path}:${type}:${name}`,
           type,
           name,
-          file: parsedFile.file,
+          file: parsedFile.path,
           line,
         });
       }
@@ -91,10 +91,10 @@ export function detectGraphQLResolvers(parsedFile: ParsedFile): GraphQLResolver[
     const line = content.substring(0, match.index).split('\n').length;
 
     resolvers.push({
-      id: `graphql-resolver:${parsedFile.file}:Query:${name}`,
+      id: `graphql-resolver:${parsedFile.path}:Query:${name}`,
       type: 'Query',
       name,
-      file: parsedFile.file,
+      file: parsedFile.path,
       line,
     });
   }
@@ -106,10 +106,10 @@ export function detectGraphQLResolvers(parsedFile: ParsedFile): GraphQLResolver[
     const line = content.substring(0, match.index).split('\n').length;
 
     resolvers.push({
-      id: `graphql-resolver:${parsedFile.file}:Mutation:${name}`,
+      id: `graphql-resolver:${parsedFile.path}:Mutation:${name}`,
       type: 'Mutation',
       name,
-      file: parsedFile.file,
+      file: parsedFile.path,
       line,
     });
   }

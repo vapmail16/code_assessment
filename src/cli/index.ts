@@ -15,6 +15,7 @@ import { createProgress } from '../utils/progress';
 import { logger } from '../utils/logger';
 import { runAssessCommand } from './commands/assess';
 import { runLineageCommand } from './commands/lineage';
+import { runValidateCommand } from './commands/validate';
 
 const program = new Command();
 

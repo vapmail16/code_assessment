@@ -19,7 +19,7 @@ export * from './performance';
 
 // Re-export specific functions to avoid conflicts
 export { detectFrontendCircularDependencies } from './analyzers/frontend';
-export { detectBackendCircularDependencies } from './analyzers/backend';
+export { detectBackendCircularDependencies } from './analyzers/backend/graph-builder';
 
 // Main entry point - will be expanded as features are implemented
 export function main(): void {
