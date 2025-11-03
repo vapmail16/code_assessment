@@ -9,6 +9,8 @@ export * from './analyzers/frontend';
 export * from './analyzers/backend';
 export * from './analyzers/database';
 export * from './lineage';
+export * from './assessment';
+export * from './reporting';
 
 // Re-export specific functions to avoid conflicts
 export { detectFrontendCircularDependencies } from './analyzers/frontend';
