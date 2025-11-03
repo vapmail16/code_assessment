@@ -6,6 +6,11 @@ export * from './types';
 export * from './github';
 export * from './detection';
 export * from './analyzers/frontend';
+export * from './analyzers/backend';
+
+// Re-export specific functions to avoid conflicts
+export { detectFrontendCircularDependencies } from './analyzers/frontend';
+export { detectBackendCircularDependencies } from './analyzers/backend';
 
 // Main entry point - will be expanded as features are implemented
 export function main(): void {
