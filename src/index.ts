@@ -8,7 +8,7 @@ export * from './detection';
 export * from './analyzers/frontend';
 export * from './analyzers/backend';
 export * from './analyzers/database';
-export * from './analyzers/database';
+export * from './lineage';
 
 // Re-export specific functions to avoid conflicts
 export { detectFrontendCircularDependencies } from './analyzers/frontend';
