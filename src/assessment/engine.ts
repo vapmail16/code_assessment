@@ -25,10 +25,15 @@ export interface AssessmentContext {
  * Run complete assessment
  */
 export async function runAssessment(
-  context: AssessmentContext
+  context: AssessmentContext,
+  options?: { useExternalScanners?: boolean }
 ): Promise<AssessmentResult> {
   // Run security scan
-  const security = await runSecurityScan(context.repoPath, context.fileTree);
+  const security = await runSecurityScan(
+    context.repoPath,
+    context.fileTree,
+    { useExternalScanners: options?.useExternalScanners }
+  );
 
   // Run quality checks
   const quality = runQualityChecks(
