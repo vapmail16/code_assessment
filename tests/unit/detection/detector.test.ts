@@ -31,7 +31,6 @@ describe('Tech Stack Detector', () => {
           } as FileNode,
         ],
       ]),
-      directories: new Map(),
     };
 
     const context: DetectionContext = {
@@ -63,7 +62,6 @@ describe('Tech Stack Detector', () => {
           } as FileNode,
         ],
       ]),
-      directories: new Map(),
     };
 
     const context: DetectionContext = {
@@ -95,7 +93,6 @@ describe('Tech Stack Detector', () => {
           } as FileNode,
         ],
       ]),
-      directories: new Map(),
     };
 
     const context: DetectionContext = {
@@ -113,7 +110,6 @@ describe('Tech Stack Detector', () => {
   test('should handle empty file tree', () => {
     const fileTree: FileTree = {
       files: new Map(),
-      directories: new Map(),
     };
 
     const context: DetectionContext = {
@@ -125,7 +121,8 @@ describe('Tech Stack Detector', () => {
     const result = detector.detectTechStack(context);
 
     expect(result).toBeDefined();
-    expect(result.confidence).toBeGreaterThanOrEqual(0);
+    expect(result).toHaveProperty('frontend');
+    expect(result).toHaveProperty('backend');
   });
 });
 
