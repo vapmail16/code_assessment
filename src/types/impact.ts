@@ -18,11 +18,14 @@ export interface ChangeRequest {
   id: string;
   description: string;
   type: ChangeType;
-  targetFiles: string[];
+  targetFiles?: string[];
   targetComponents?: string[];
   targetEndpoints?: string[];
   targetTables?: string[];
+  affectedAreas?: string[];
+  priority?: 'low' | 'medium' | 'high' | 'critical';
   parsedIntent?: ParsedIntent;
+  metadata?: Record<string, any>;
 }
 
 export type ChangeType =
