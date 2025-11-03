@@ -1,0 +1,61 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist
+build
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Test files
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+tests
+
+# Documentation (optional - keep if needed)
+docs
+*.md
+!README.md
+
+# Output directories
+output
+logs
+tmp
+temp
+
+# Docker files (don't include in build context recursively)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Misc
+*.log
+
