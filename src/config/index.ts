@@ -46,15 +46,16 @@ export interface Config {
     enabled: boolean;
     ttl: number; // seconds
   };
-    database: {
-      host: string;
-      port: number;
-      database: string;
-      user: string;
-      password: string;
-      maxConnections: number;
-      connectionString?: string;
-    };
+  database: {
+    enabled: boolean;
+    host?: string;
+    port?: number;
+    database?: string;
+    user?: string;
+    password?: string;
+    connectionString?: string;
+    ssl?: boolean;
+  };
 }
 
 /**
@@ -96,14 +97,14 @@ export function loadConfig(): Config {
       ttl: parseInt(process.env.CACHE_TTL || '3600', 10), // 1 hour
     },
     database: {
-      host: process.env.POSTGRES_HOST || process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.POSTGRES_PORT || process.env.DB_PORT || '5432', 10),
-      database: process.env.POSTGRES_DB || process.env.DB_NAME || 'code_assessment',
-      user: process.env.POSTGRES_USER || process.env.DB_USER || 'postgres',
-      password: process.env.POSTGRES_PASSWORD || process.env.DB_PASSWORD || 'postgres',
-      poolMax: parseInt(process.env.DB_POOL_MAX || '20', 10),
-      poolIdleTimeout: parseInt(process.env.DB_POOL_IDLE_TIMEOUT || '30000', 10),
-      connectionTimeout: parseInt(process.env.DB_CONNECTION_TIMEOUT || '2000', 10),
+      enabled: process.env.DATABASE_ENABLED !== 'false',
+      host: process.env.POSTGRES_HOST,
+      port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT, 10) : undefined,
+      database: process.env.POSTGRES_DB,
+      user: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_SSL === 'true',
     },
   };
 }
