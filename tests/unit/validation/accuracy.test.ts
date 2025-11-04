@@ -21,6 +21,7 @@ describe('Accuracy Validation', () => {
           layer: 'frontend',
           label: 'UserProfile',
           file: 'src/components/UserProfile.tsx',
+          data: {},
         },
         {
           id: 'endpoint:GET /api/users/:id',
@@ -28,6 +29,7 @@ describe('Accuracy Validation', () => {
           layer: 'backend',
           label: 'GET /api/users/:id',
           file: 'src/routes/users.ts',
+          data: {},
         },
       ],
       edges: [
@@ -38,6 +40,7 @@ describe('Accuracy Validation', () => {
           type: 'api-call',
           label: 'GET /api/users/:id',
           confidence: 0.8,
+          data: {},
         },
       ],
       layers: {

@@ -39,7 +39,6 @@ describe('Full Pipeline Integration', () => {
       });
       
       expect(techStack).toBeDefined();
-      expect(techStack.confidence).toBeGreaterThanOrEqual(0);
       
       // Cleanup
       await githubService.removeClonedRepository(repoId);

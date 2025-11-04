@@ -36,18 +36,19 @@ describe('UserProfile', () => {
 `;
     fs.writeFileSync(testFile, content);
 
+    const fileNode: FileNode = {
+      type: 'file',
+      path: testFile,
+      relativePath: 'Component.test.tsx',
+      name: 'Component.test.tsx',
+      size: content.length,
+      content,
+    };
     const fileTree: FileTree = {
-      files: new Map([
-        [
-          testFile,
-          {
-            type: 'file',
-            path: testFile,
-            name: 'Component.test.tsx',
-            content,
-          } as FileNode,
-        ],
-      ]),
+      root: { type: 'directory', path: tempDir, relativePath: '', name: path.basename(tempDir), size: 0 },
+      files: new Map([[testFile, fileNode]]),
+      totalFiles: 1,
+      totalSize: content.length,
     };
 
     const testFiles = detectTestFiles(fileTree);
@@ -66,11 +67,13 @@ describe('UserProfile', () => {
     fs.writeFileSync(sourceFile, 'export const UserProfile = () => null;');
     fs.writeFileSync(testFile, 'import { UserProfile } from "./UserProfile";');
 
+    const sourceNode: FileNode = { type: 'file', path: sourceFile, relativePath: 'UserProfile.tsx', name: 'UserProfile.tsx', size: 0, content: '' };
+    const testNode: FileNode = { type: 'file', path: testFile, relativePath: 'UserProfile.test.tsx', name: 'UserProfile.test.tsx', size: 0, content: 'import { UserProfile } from "./UserProfile";' };
     const fileTree: FileTree = {
-      files: new Map([
-        [sourceFile, { type: 'file', path: sourceFile, name: 'UserProfile.tsx', content: '' } as FileNode],
-        [testFile, { type: 'file', path: testFile, name: 'UserProfile.test.tsx', content: 'import { UserProfile } from "./UserProfile";' } as FileNode],
-      ]),
+      root: { type: 'directory', path: tempDir, relativePath: '', name: path.basename(tempDir), size: 0 },
+      files: new Map([[sourceFile, sourceNode], [testFile, testNode]]),
+      totalFiles: 2,
+      totalSize: 0,
     };
 
     const testFiles = detectTestFiles(fileTree);

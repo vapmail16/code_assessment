@@ -60,7 +60,7 @@ export async function createUser(data: any) {
     const result = parseBackendFile(testFile);
 
     expect(result).not.toBeNull();
-    expect(result?.functions.length).toBeGreaterThan(0);
+    expect(result?.functions?.length).toBeGreaterThan(0);
   });
 
   test('should handle invalid file gracefully', () => {
@@ -86,8 +86,8 @@ export class UserService {
     const result = parseBackendFile(testFile);
 
     expect(result).not.toBeNull();
-    expect(result?.classes.length).toBe(1);
-    expect(result?.classes[0].methods.length).toBe(2);
+    expect(result?.classes?.length).toBe(1);
+    expect(result?.classes?.[0]?.methods?.length).toBe(2);
   });
 });
 

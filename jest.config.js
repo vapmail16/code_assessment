@@ -8,13 +8,15 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@octokit)/)',
+    'node_modules/(?!(@octokit|@octokit/.*)/)',
   ],
-  extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
       useESM: true,
-    },
+      tsconfig: {
+        module: 'ESNext',
+      },
+    }],
   },
 };
 

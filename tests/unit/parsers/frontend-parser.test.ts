@@ -45,8 +45,8 @@ export const Component: React.FC<Props> = ({ name, age }) => {
 
     expect(result).not.toBeNull();
     expect(result?.language).toBe('typescript');
-    expect(result?.imports.length).toBeGreaterThan(0);
-    expect(result?.exports.length).toBeGreaterThan(0);
+    expect(result?.imports?.length).toBeGreaterThan(0);
+    expect(result?.exports?.length).toBeGreaterThan(0);
     expect(result?.imports.some((imp) => imp.from === 'react')).toBe(true);
   });
 
@@ -64,7 +64,7 @@ async function fetchUserData(userId) {
 
     expect(result).not.toBeNull();
     expect(result?.language).toBe('javascript');
-    expect(result?.functions.length).toBeGreaterThan(0);
+    expect(result?.functions?.length).toBeGreaterThan(0);
   });
 
   test('should handle invalid file gracefully', () => {
@@ -73,7 +73,7 @@ async function fetchUserData(userId) {
   });
 
   test('should calculate complexity', () => {
-    const testFile = path.join(tempDir, 'complex.tsx');
+    const testFile = path.join(tempDir, 'complex.js');
     const content = `
 function complexFunction(x) {
   if (x > 0) {
@@ -93,7 +93,9 @@ function complexFunction(x) {
     const result = parseFrontendFile(testFile);
 
     expect(result).not.toBeNull();
-    expect(result?.complexity).toBeGreaterThan(1);
+    if (result) {
+      expect(result.complexity).toBeGreaterThan(1);
+    }
   });
 });
 
