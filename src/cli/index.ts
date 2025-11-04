@@ -13,6 +13,7 @@ import { runBenchmark, runBenchmarkSuite, generatePerformanceReport } from '../p
 import { validateLineageAccuracy, createSampleTestCases } from '../validation';
 import { createProgress } from '../utils/progress';
 import { logger } from '../utils/logger';
+import { saveAnalysisResult, saveAnalysisError } from '../services/persistence';
 import { runAssessCommand } from './commands/assess';
 import { runLineageCommand } from './commands/lineage';
 import { runValidateCommand } from './commands/validate';
@@ -104,6 +105,21 @@ program
         ? techStack.backend[0].name 
         : 'N/A';
       console.log(`✓ Detected tech stack: ${frontendName}, ${backendName}`);
+      
+      // Save to database if enabled
+      try {
+        const analysisId = await saveAnalysisResult({
+          repository: `${owner}/${repo}`,
+          repositoryUrl: `https://github.com/${owner}/${repo}`,
+          techStack,
+        });
+        if (analysisId) {
+          console.log(`✓ Analysis saved to database (ID: ${analysisId})`);
+        }
+      } catch (error: any) {
+        logger.warn('Failed to save analysis to database', { error: error.message });
+        // Continue without database save
+      }
       
       console.log('✓ Analysis complete');
     } catch (error: any) {

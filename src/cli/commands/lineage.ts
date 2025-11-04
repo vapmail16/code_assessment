@@ -102,6 +102,32 @@ export async function runLineageCommand(
 
     const graph = buildLineageGraph(graphContext);
 
+    // Detect tech stack for database storage
+    const detector = new TechStackDetector();
+    const techStack = detector.detectTechStack({
+      fileTree: analysis.fileTree,
+      configFiles: analysis.configFiles,
+      entryPoints: analysis.entryPoints,
+    });
+
+    // Save to database if enabled
+    let analysisId: number | null = null;
+    try {
+      analysisId = await saveAnalysisResult({
+        repository: repoId,
+        repositoryUrl: `https://github.com/${repoId}`,
+        techStack,
+        lineageGraph: graph,
+      });
+      logger.info('Lineage graph saved to database', { analysisId, repository: repoId });
+    } catch (dbError: any) {
+      logger.warn('Failed to save lineage graph to database', {
+        error: dbError.message,
+        repository: repoId,
+      });
+      // Continue without database save
+    }
+
     // Export graph
     progress.increment();
     logger.info('Exporting graph', { format });
@@ -135,6 +161,9 @@ export async function runLineageCommand(
 
     progress.complete();
     console.log(`\n✓ Lineage graph exported to: ${outputPath}`);
+    if (analysisId) {
+      console.log(`✓ Lineage graph saved to database (ID: ${analysisId})`);
+    }
     console.log(`  Nodes: ${graph.nodes.length}`);
     console.log(`  Edges: ${graph.edges.length}`);
   } catch (error: any) {
