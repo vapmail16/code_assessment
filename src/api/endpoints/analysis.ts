@@ -71,16 +71,15 @@ export async function analyzeRepositoryEndpoint(
     const durationMs = Date.now() - startTime;
 
     // Save to database
-    let analysisId: string | undefined;
+    let analysisId: number | null = null;
     try {
-      analysisId = await saveAnalysisResult(
+      analysisId = await saveAnalysisResult({
         repository,
-        `https://github.com/${repository}`,
-        assessment,
-        lineageGraph,
+        repositoryUrl: `https://github.com/${repository}`,
         techStack,
-        durationMs
-      );
+        assessmentResult: assessment,
+        lineageGraph,
+      });
       logger.info('Analysis result saved to database', { analysisId, repository });
     } catch (dbError: any) {
       logger.warn('Failed to save analysis to database', {
@@ -92,7 +91,7 @@ export async function analyzeRepositoryEndpoint(
 
     res.json({
       success: true,
-      id: analysisId,
+      id: analysisId?.toString(),
       repository,
       techStack,
       assessment,
