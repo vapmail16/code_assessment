@@ -1,33 +1,38 @@
 /**
- * Database module exports
+ * Database module
  */
 
 export * from './connection';
-export * from './models';
-export * from './analysis-repository';
-export * from './migrations';
+export * from './models/analysis-result';
+export * from './models/impact-analysis';
+export * from './models/validation-result';
 
 export {
   initializeDatabase,
-  getDatabase,
+  getDatabasePool,
   query,
-  transaction,
   testConnection,
   closeDatabase,
+  runMigrations,
 } from './connection';
 
 export {
-  saveAnalysisResult,
-  getAnalysisResult,
-  getAnalysisResultsByRepository,
-  saveImpactAnalysis,
-  getImpactAnalysesByAnalysisId,
-  saveValidationResult,
-  saveBenchmarkResult,
-  getRecentBenchmarks,
-  cacheParsedFile,
-  getCachedParsedFile,
-  cleanExpiredCache,
-} from './analysis-repository';
+  createAnalysisResult,
+  getAnalysisResultById,
+  getAnalysisResultByRepository,
+  listAnalysisResults,
+  updateAnalysisResult,
+  deleteAnalysisResult,
+} from './models/analysis-result';
 
-export { runMigrations, isDatabaseInitialized } from './migrations';
+export {
+  createImpactAnalysis,
+  getImpactAnalysesByAnalysisResultId,
+  getImpactAnalysisById,
+} from './models/impact-analysis';
+
+export {
+  createValidationResult,
+  getValidationResultsByTestCase,
+  getValidationResultsByRepository,
+} from './models/validation-result';
