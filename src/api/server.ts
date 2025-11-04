@@ -14,6 +14,7 @@ import { exportToJSON, exportToGraphML, exportToCytoscape } from '../visualizati
 import { loadConfig } from '../config';
 import { logger } from '../utils/logger';
 import { formatError } from '../utils/errors';
+import { initializeDatabase, runMigrations, testConnection } from '../database';
 
 export interface ServerOptions {
   port?: number;
@@ -63,8 +64,16 @@ export function createServer(options: ServerOptions = {}): Express {
   });
 
   // Health check
-  app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  app.get('/health', async (req, res) => {
+    const { getDatabaseService } = await import('../database/service');
+    const dbService = getDatabaseService();
+    const dbHealthy = await dbService.healthCheck();
+
+    res.json({
+      status: dbHealthy ? 'ok' : 'degraded',
+      timestamp: new Date().toISOString(),
+      database: dbHealthy ? 'connected' : 'disconnected',
+    });
   });
 
   // Analyze repository endpoint
@@ -185,11 +194,22 @@ export function createServer(options: ServerOptions = {}): Express {
 /**
  * Start server
  */
-export function startServer(options: ServerOptions = {}): void {
+export async function startServer(options: ServerOptions = {}): Promise<void> {
   const app = createServer(options);
   const config = loadConfig();
   const port = options.port || config.server.port;
   const host = options.host || config.server.host;
+
+  // Initialize database connection
+  try {
+    initializeDatabase(config.database);
+    await runMigrations();
+    logger.info('Database initialized and migrations completed');
+  } catch (error: any) {
+    logger.warn('Database initialization failed, continuing without persistence', {
+      error: error.message,
+    });
+  }
 
   app.listen(port, host, () => {
     logger.info(`Code Assessment API server running on ${host}:${port}`);
