@@ -8,6 +8,7 @@ import { buildLineageGraph, LineageGraphContext } from '../../lineage/graph-buil
 import { exportToJSON, exportToGraphML, exportToCytoscape } from '../../visualization';
 import { createProgress } from '../../utils/progress';
 import { logger } from '../../utils/logger';
+import { saveAnalysisResult } from '../../services/persistence';
 import { parseFrontendFile } from '../../analyzers/frontend/parser';
 import { parseBackendFile } from '../../analyzers/backend/parser';
 import { extractEndpoints } from '../../analyzers/backend/endpoint-extractor';
