@@ -7,7 +7,7 @@ import { GitHubService } from '../../github/service';
 import { TechStackDetector } from '../../detection';
 import { runAssessment } from '../../assessment/engine';
 import { buildLineageGraph } from '../../lineage/graph-builder';
-import { saveAnalysisResult } from '../../database/analysis-repository';
+import { saveAnalysisResult } from '../../services/persistence';
 import { logger } from '../../utils/logger';
 import { formatError } from '../../utils/errors';
 
