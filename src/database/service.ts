@@ -7,14 +7,15 @@ import {
   getRepositoryByGitHubId,
   type Repository,
 } from './models/repository';
-import {
-  createAnalysisRun,
-  updateAnalysisRunStatus,
-  saveAssessmentResults,
-  saveLineageGraph,
-  saveImpactAnalysis,
-  type AnalysisRun,
-} from './models/analysis-run';
+// Analysis run functionality removed - using direct models instead
+// import {
+//   createAnalysisRun,
+//   updateAnalysisRunStatus,
+//   saveAssessmentResults,
+//   saveLineageGraph,
+//   saveImpactAnalysis,
+//   type AnalysisRun,
+// } from './models/analysis-run';
 import { AssessmentResult } from '../types';
 import { LineageGraph } from '../types';
 import { ImpactAnalysis } from '../types';
@@ -66,57 +67,7 @@ export class DatabaseService {
     return await getRepositoryByGitHubId(githubId);
   }
 
-  /**
-   * Start analysis run
-   */
-  async startAnalysisRun(
-    repositoryId: string,
-    techStack?: TechStack
-  ): Promise<AnalysisRun> {
-    return await createAnalysisRun({ repository_id: repositoryId, tech_stack: techStack });
-  }
-
-  /**
-   * Complete analysis run and save results
-   */
-  async completeAnalysisRun(
-    analysisRunId: string,
-    results: {
-      assessment?: AssessmentResult;
-      lineageGraph?: LineageGraph;
-      impactAnalysis?: ImpactAnalysis;
-    }
-  ): Promise<void> {
-    try {
-      // Save assessment results
-      if (results.assessment) {
-        await saveAssessmentResults(analysisRunId, results.assessment);
-      }
-
-      // Save lineage graph
-      if (results.lineageGraph) {
-        await saveLineageGraph(analysisRunId, results.lineageGraph);
-      }
-
-      // Save impact analysis
-      if (results.impactAnalysis) {
-        await saveImpactAnalysis(analysisRunId, results.impactAnalysis);
-      }
-
-      // Mark as completed
-      await updateAnalysisRunStatus(analysisRunId, 'completed');
-    } catch (error: any) {
-      await updateAnalysisRunStatus(analysisRunId, 'failed', error.message);
-      throw error;
-    }
-  }
-
-  /**
-   * Fail analysis run
-   */
-  async failAnalysisRun(analysisRunId: string, error: Error): Promise<void> {
-    await updateAnalysisRunStatus(analysisRunId, 'failed', error.message);
-  }
+  // Analysis run methods removed - use direct models instead
 }
 
 // Singleton instance
